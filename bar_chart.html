@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+              
+  <title>The HTML5 Herald</title>
+  <meta name="description" content="bar chart">
+  <meta name="power-watt" content="SitePoint">
+    
+  <!--<link rel="stylesheet" href="css/styles.css?v=1.0">-->
+  <script src="https://d3js.org/d3.v5.js"></script>      
+</head>
+
+<body>
+
+  <div id='my_chart'></div>
+</body>
+<script>
+  var my_data = [100, 125, 320, 440, 500, 350, 700, 340, 290];
+  var height = 800;
+  var width = 800;
+  var margin = 30;
+  var animate_duration = 700; //ms
+  var animate_delay = 50; //ms
+
+  // bar height and width scaling
+  var y_scale = d3.scaleLinear()
+    .domain([0, d3.max(my_data)])
+    .range([0, height]);
+  var x_scale = d3.scaleBand()
+    .domain(d3.range(0, my_data.length))
+    .range([0, width]);
+      
+  var colors = d3.scaleLinear()
+    .domain([0, my_data.length])
+    .range(["#90ee90", "#30c230"]);
+
+  var chart = d3.select('#my_chart').append('svg')
+    .attr('width', width + 2*margin)
+    .attr('height', height + 2*margin)
+    .style('background', '#f4f4f4');
+
+  // bar graphics
+  bar_group = chart.append('g')
+    .attr('transform', 'translate(' + margin + ',' + margin + ')')
+    .selectAll('rect')
+      .data(my_data)
+      .enter()
+        .append('g')
+          .on('mouseover', handle_mouse_over_bar)
+          .on('mouseout', handle_mouse_out_bar);
+  bar_group.append('rect')
+    .style('fill', (d, i) => colors(i))
+    .attr('width', x_scale.bandwidth())
+    .attr('height', 0) // starts at zero height when page is loaded, animation will put in the real value
+    .attr('x', (d, i) => x_scale(i))
+    .attr('y', height); // starts at zero height when page is loaded, animation will put in the real value
+  bar_group.append('text')
+    .attr('dx', (d, i) => x_scale(i) + x_scale.bandwidth()/2)
+    .attr('dy', (d) => height - y_scale(d) + 10)
+    .style('opacity', 0)
+    .text((d) => d);
+
+  function handle_mouse_over_bar(d, i){
+    d3.select(this).select('rect').style('opacity', 0.5);
+    d3.select(this).select('text').transition()
+      .attr('dy', (d) => height - y_scale(d))
+      .style('opacity', 1)
+      .duration(700)
+      .ease(d3.easeExpOut);
+  };
+
+  function handle_mouse_out_bar(d){
+    d3.select(this).select('rect').style('opacity', 1);
+    d3.select(this).select('text').transition()
+      .attr('dy', (d) => height - y_scale(d) + 10)
+      .style('opacity', 0)
+      .duration(700)
+      .ease(d3.easeExpOut);
+  };
+
+  // onload animation effect
+  chart.selectAll('rect').transition()
+    .attr('height', (d) => y_scale(d))
+    .attr('y', (d) => height - y_scale(d))
+    .duration(animate_duration)
+    .delay((d, i) => i * animate_delay)
+    .ease(d3.easeExpOut);
+
+  // axis config
+  var x = d3.scaleBand()
+    .domain(d3.range(0, my_data.length)) //
+    .range([0,width]);
+      
+  var y = d3.scaleLinear()
+    .domain([0, d3.max(my_data)]) //
+    .range([height,0]);
+
+  chart.append("g")
+    .attr("transform", "translate(" + margin + "," + margin + ")")
+    .call(d3.axisLeft(y));
+
+  chart.append("g")
+    .attr("transform", "translate(" + margin + "," + (height+margin) + ")")
+    .call(d3.axisBottom(x));
+
+</script>
+</html>
