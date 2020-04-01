@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+              
+  <title>D3.js Bar Chart</title>
+  <meta name="description" content="bar chart">
+  <meta name="power-watt" content="SitePoint">
+    
+  <!--<link rel="stylesheet" href="css/styles.css?v=1.0">-->
+  <script src="https://d3js.org/d3.v5.js"></script>      
+</head>
+
+<body>
+
+  <div id='my_chart'></div>
+</body>
+<script>
+  const margin = {top: 30, right: 30, bottom: 30, left: 30};
+  const height = 800;
+  const width = 1000;
+  const animate_duration = 700; //ms
+  const animate_delay = 50; //ms
+  const r = 10;
+
+  // data
+  const my_data = [{y: 100, x: 100},
+                 {y: 125, x: 200}, 
+                 {y: 320, x: 300},
+                 {y: 440, x: 400},
+                 {y: 500, x: 500},
+                 {y: 350, x: 600},
+                 {y: 700, x: 700},
+                 {y: 340, x: 800},
+                 {y: 290, x: 900}];
+
+  const x_data = my_data.map((obj) => obj.x);
+  const y_data = my_data.map((obj) => obj.y);
+
+  // axis config
+  const x = d3.scaleLinear()
+    .domain([0, d3.max(x_data)]) //
+    .range([0, width]);
+  const y = d3.scaleLinear()
+    .domain([0, d3.max(y_data)]) //
+    .range([height, 0]);
+
+
+  // data height and width scaling
+  const x_scale = d3.scaleLinear()
+    .domain([0, d3.max(x_data)]) //
+    .range([0, width]);
+  const y_scale = d3.scaleLinear()
+    .domain([0, d3.max(y_data)]) //
+    .range([0, height]);
+      
+  const colors = d3.scaleLinear()
+    .domain([0, y_data.length])
+    .range(["#90ee90", "#30c230"]);
+
+
+  const line = d3.line()
+    .x((d) => x_scale(d.x))
+    .y((d) => height - y_scale(d.y))
+    .curve(d3.curveLinear);
+
+  let chart = d3.select('#my_chart').append('svg')
+    .attr('width', width + margin.left + margin.right)
+    .attr('height', height + margin.top + margin.bottom)
+    .style('background', '#f4f4f4');
+  
+  // add axis
+  chart.append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+    .call(d3.axisLeft(y));
+  chart.append("g")
+    .attr("transform", "translate(" + margin.left + "," + (height + margin.top) + ")")
+    .call(d3.axisBottom(x));
+
+  //  add line
+  chart.append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+    .append('path')
+      .datum(my_data)
+      .attr('stroke', '#30c230')
+      .attr('stroke-width', 2)
+      .style('fill', 'none')
+      .attr('d', line);
+
+  // circle graphics
+  data_group = chart.append('g')
+    .attr('transform', 'translate(' + margin.top + ',' + margin.left + ')')
+    .selectAll('circle')
+      .data(my_data)
+      .enter()
+        .append('g')
+          .on('mouseover', handle_mouse_over_circle)
+          .on('mouseout', handle_mouse_out_circle);
+  data_group.append('circle')
+    .style('fill', (d, i) => colors(i))
+    .attr('r', r)
+    .attr('cx', (d) => x_scale(d.x))
+    .attr('cy', (d) => height - y_scale(d.y))
+  data_group.append('text')
+    .attr('dx', (d) => x_scale(d.x))
+    .attr('dy', (d) => height - y_scale(d.y) - r)
+    .style('opacity', 0)
+    .text((d) => `${d.x}, ${d.y}`);
+
+  function handle_mouse_over_circle(d, i){
+    d3.select(this).select('circle').attr('r', r + 8);
+    d3.select(this).select('text').transition()
+      .attr('dx', (d) => x_scale(d.x) + r + 8)
+      .attr('dy', (d) => height - y_scale(d.y) - r - 8)
+      .style('opacity', 1)
+      .duration(700)
+      .ease(d3.easeExpOut);
+  };
+
+  function handle_mouse_out_circle(d, i){
+    d3.select(this).select('circle').attr('r', r);
+    d3.select(this).select('text').transition()
+      .attr('dx', (d) => x_scale(d.x) - r)
+      .attr('dy', (d) => height - y_scale(d.y) - r)
+      .style('opacity', 0)
+      .duration(700)
+      .ease(d3.easeExpOut);
+  };
+
+  // onload animation effect
+  //chart.selectAll('rect').transition()
+  //  .attr('height', (d, i) => y_scale(i))
+  //  .attr('y', (d, i) => height - y_scale(i))
+  //  .duration(animate_duration)
+  //  .delay((d, i) => i * animate_delay)
+  //  .ease(d3.easeExpOut);
+
+
+
+</script>
+</html>
